@@ -1,14 +1,24 @@
-﻿using UnityEngine;
+﻿using System;
+using _Building.Scripts.Game.Gameplay.Root.View;
+using UnityEngine;
 
 namespace _Building.Scripts.Game.Gameplay.Root
 {
     public class GameplayEntryPoint : MonoBehaviour
     {
-        [SerializeField] private GameObject _sceneRootBinder;
+        public event Action GoToMainMenuSceneRequested; 
 
-        public void Run()
+        [SerializeField] private UIGameplayRootBinder _sceneUIRootPrefab;
+
+        public void Run(UIRootView uiRoot)
         {
-            Debug.Log("Gameplay scene loaded");
+            var uiScene = Instantiate(_sceneUIRootPrefab);
+            uiRoot.AttachSceneUI(uiScene.gameObject);
+
+            uiScene.GoToMainMenuButtonClicked += () =>
+            {
+                GoToMainMenuSceneRequested?.Invoke();
+            };
         }
     }
 }

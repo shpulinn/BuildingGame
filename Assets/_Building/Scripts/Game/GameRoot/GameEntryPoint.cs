@@ -1,5 +1,6 @@
 using System.Collections;
 using _Building.Scripts.Game.Gameplay.Root;
+using _Building.Scripts.Game.MainMenu.Root;
 using _Building.Scripts.Utils;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -43,6 +44,11 @@ namespace _Building.Scripts
                 return;
             }
 
+            if (sceneName == Scenes.MAIN_MENU)
+            {
+                _coroutines.StartCoroutine(LoadAndStartMainMenu());
+            }
+
             if (sceneName != Scenes.BOOT)
             {
                 return;
@@ -50,9 +56,32 @@ namespace _Building.Scripts
 #endif
             
             // launch game
-            _coroutines.StartCoroutine(LoadAndStartGameplay());
+            _coroutines.StartCoroutine(LoadAndStartMainMenu());
+            //_coroutines.StartCoroutine(LoadAndStartGameplay());
         }
 
+        private IEnumerator LoadAndStartMainMenu()
+        {
+            _uiRoot.ShowLoadingScreen();
+
+            yield return LoadScene(Scenes.BOOT);
+            yield return LoadScene(Scenes.MAIN_MENU);
+
+            yield return new WaitForSeconds(2);
+
+            // container
+            var sceneEntryPoint = Object.FindFirstObjectByType<MainMenuEntryPoint>();
+            sceneEntryPoint.Run(_uiRoot);
+            
+            // temporary bad code
+            sceneEntryPoint.GoToGameplaySceneRequested += () =>
+            {
+                _coroutines.StartCoroutine(LoadAndStartGameplay());
+            };
+            
+            _uiRoot.HideLoadingScreen();
+        }
+        
         private IEnumerator LoadAndStartGameplay()
         {
             _uiRoot.ShowLoadingScreen();
@@ -64,7 +93,13 @@ namespace _Building.Scripts
 
             // container
             var sceneEntryPoint = Object.FindFirstObjectByType<GameplayEntryPoint>();
-            sceneEntryPoint.Run();
+            sceneEntryPoint.Run(_uiRoot);
+
+            // temporary bad code
+            sceneEntryPoint.GoToMainMenuSceneRequested += () =>
+            {
+                _coroutines.StartCoroutine(LoadAndStartMainMenu());
+            };
             
             _uiRoot.HideLoadingScreen();
         }
